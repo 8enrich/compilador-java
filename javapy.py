@@ -7,6 +7,10 @@ import regex
 EOB = '\0'
 BUFFER_SIZE = 5
 
+if len(argv) != 2:
+    print(f"Uso: python3 {argv[0]} <java-file>")
+    exit(1)
+
 token_table = []
 symbol_table = {}
 filename = argv[1]
