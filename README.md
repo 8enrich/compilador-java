@@ -4,6 +4,8 @@ JavaPy é um projeto de compilador Java escrito em Python, sendo desenvolvido pa
 a cadeira de compiladores do curso de ciências da computação, por enquanto
 contém apenas a parte de análise léxica.
 
+----------
+
 ### Como rodar
 
 - Clone o repositório:
@@ -23,6 +25,8 @@ cd compilador-java
 ```bash
 python3 javapy.py <java-file>
 ```
+
+----------
 
 ### Rodando os testes:
 
