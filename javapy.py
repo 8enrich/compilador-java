@@ -4,43 +4,71 @@ from delimitators import delimitators
 from sys import argv
 import regex
 
+EOB = '\0'
+BUFFER_SIZE = 5
+
 token_table = []
 symbol_table = {}
 filename = argv[1]
 file = open(filename, mode='r')
-source = file.read()
-begin_pointer = forward_pointer = 0
-EOF = "EOF"
+begin_pointer = forward_pointer = (0, 0)
+buffers = ["", ""]
+lexeme = ""
+eof = False
+for i in range(2):
+    data = file.read(BUFFER_SIZE - 1)
+    eof = eof or len(data) < BUFFER_SIZE - 1
+    buffers[i] = data + EOB
 
 def set_begin_pointer():
-    global begin_pointer
+    global begin_pointer, lexeme
+    lexeme = ""
     begin_pointer = forward_pointer
 
 def current_char() -> str:
-    if end_of_file():
-        return EOF
-    return source[forward_pointer]
+    return buffers[forward_pointer[0]][forward_pointer[1]]
+
+def end_of_buffer(step: int = 0):
+    return forward_pointer[1] + step >= len(buffers[forward_pointer[0]])
 
 def get_next_char() -> str: 
-    if end_of_file(1):
-        return EOF
-    return source[forward_pointer + 1]
+    if end_of_buffer(1):
+        return buffers[1 - forward_pointer[0]][0]
+    return buffers[forward_pointer[0]][forward_pointer[1] + 1]
 
 def advance():
-    global forward_pointer
-    forward_pointer += 1
+    global forward_pointer, lexeme, eof
 
-def end_of_file(step: int = 0):
-    return forward_pointer + step >= len(source)
+    current_buffer = forward_pointer[0]
+    char = current_char()
+
+    lexeme += char
+
+    forward_pointer = (current_buffer, forward_pointer[1] + 1)
+    if buffers[current_buffer][forward_pointer[1]] != EOB: return
+
+    forward_pointer = (1 - current_buffer, 0)
+    data = file.read(BUFFER_SIZE - 1)
+    if not data:
+        buffers[current_buffer] = ""
+
+    if eof: return
+
+    eof = eof or len(data) < BUFFER_SIZE - 1
+
+    buffers[current_buffer] = data + EOB
+
+def end_of_file():
+    return eof and not buffers[0] and not buffers[1] or (buffers[0] == EOB or buffers[1] == EOB)
 
 def get_lexeme() -> str:
-    return source[begin_pointer:forward_pointer]
+    return lexeme
 
 def is_identifier_or_keyword_start(char: str):
     return regex.match("[A-Za-z_]", char)
 
 def is_identifier_or_keyword(char: str):
-    return regex.match("[A-Za-z]", char)
+    return regex.match("[A-Za-z0-9_]", char)
 
 def is_digit(char: str):
     return regex.match("[0-9]", char)
@@ -61,7 +89,7 @@ def is_whitespace(char: str):
     return char in " \n\t\r"
 
 def read_identifier_or_keyword():
-    while current_char() != EOF and regex.match("[A-Za-z0-9_]", current_char()): advance()
+    while not end_of_file() and is_identifier_or_keyword(current_char()): advance()
     lexeme = get_lexeme()
     if lexeme in keywords:
         create_token("KEYWORD", lexeme)
@@ -69,11 +97,11 @@ def read_identifier_or_keyword():
     create_token("IDENTIFIER", lexeme)
 
 def read_number():
-    while current_char() != EOF and regex.match("[0-9]", current_char()): advance()
+    while not end_of_file() and is_digit(current_char()): advance()
     if current_char() == ".":
         return read_float()
     if current_char() not in "+-*/%; )":
-        while current_char() != EOF and current_char() not in "+-*/%; ": advance()
+        while not end_of_file() and current_char() not in "+-*/%; ": advance()
         lexeme = get_lexeme()
         create_error_token(lexeme)
         return
@@ -83,7 +111,7 @@ def read_number():
 
 def read_float():
     advance()
-    while current_char() != EOF and regex.match("[0-9]", current_char()): advance()
+    while not end_of_file() and is_digit(current_char()): advance()
     lexeme = get_lexeme()
     if lexeme[-1] == ".": 
         create_error_token(lexeme)
@@ -102,16 +130,16 @@ def ignore_comment():
     next_char = get_next_char()
     if char == "/" and next_char == "*":
         return ignore_multiline_comment()
-    while current_char() != EOF and current_char() != "\n": advance()
+    while not end_of_file() and current_char() != "\n": advance()
 
 def ignore_multiline_comment():
     closed = False
-    while current_char() != EOF:
+    while not end_of_file():
         char = current_char()
         next_char = get_next_char()
         advance()
-        advance()
         if char == "*" and next_char == "/":
+            advance()
             closed = True
             break
     if not closed:
@@ -138,9 +166,10 @@ def read_delimitator():
 
 def read_char():
     quote = 0
-    while quote != 2 and current_char() != EOF:
-        char = current_char()
-        if char == "'":
+    while not end_of_file():
+        if quote == 2:
+            break
+        if current_char() == "'":
             quote += 1
         advance()
     lexeme = get_lexeme()
@@ -154,7 +183,9 @@ def read_char():
 
 def read_string():
     double_quote = 0
-    while double_quote != 2 and current_char() != EOF:
+    while not end_of_file():
+        if double_quote == 2:
+            break
         char = current_char()
         if char == "\\":
             advance()
@@ -218,7 +249,7 @@ def lexical_analyzer():
         create_error_token(char)
     
 def main():
-    return lexical_analyzer()
+    lexical_analyzer()
 
 main()
 file.close()

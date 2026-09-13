@@ -8,7 +8,7 @@ def get_absolute_filename(filename: str) -> str:
 def test(filename: str):
     print(f"Testando arquivo {filename}")
     print()
-    os.system(f"python3 {get_absolute_filename("main.py")} {get_absolute_filename("java-files/" + filename)}")
+    os.system(f"python3 {get_absolute_filename("javapy.py")} {get_absolute_filename("java-files/" + filename)}")
     print()
 
 def tests(files: list[str]):
