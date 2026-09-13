@@ -68,6 +68,43 @@ def end_of_file():
 def get_lexeme() -> str:
     return lexeme
 
+def lexical_analyzer():
+
+    while not end_of_file():
+        
+        char = current_char()
+
+        if is_whitespace(char):
+            advance()
+            set_begin_pointer()
+            continue
+
+        if is_identifier_or_keyword_start(char):
+            read_identifier_or_keyword()
+            continue
+
+        if is_digit(char):
+            read_number()
+            continue
+
+        if is_char(char):
+            read_char()
+            continue
+
+        if is_string(char):
+            read_string()
+            continue
+
+        if is_operator_or_comment(char):
+            read_operator_or_comment()
+            continue
+
+        if is_delimitator(char):
+            read_delimitator()
+            continue
+
+        create_error_token(char)
+
 def is_identifier_or_keyword_start(char: str):
     return regex.match("[A-Za-z_]", char)
 
@@ -214,44 +251,7 @@ def create_token(token_type: str, lexeme: str, attribute = None):
 
 def create_error_token(lexeme: str):
     create_token("ERROR", lexeme)
-
-def lexical_analyzer():
-
-    while not end_of_file():
-        
-        char = current_char()
-
-        if is_whitespace(char):
-            advance()
-            set_begin_pointer()
-            continue
-
-        if is_identifier_or_keyword_start(char):
-            read_identifier_or_keyword()
-            continue
-
-        if is_digit(char):
-            read_number()
-            continue
-
-        if is_char(char):
-            read_char()
-            continue
-
-        if is_string(char):
-            read_string()
-            continue
-
-        if is_operator_or_comment(char):
-            read_operator_or_comment()
-            continue
-
-        if is_delimitator(char):
-            read_delimitator()
-            continue
-
-        create_error_token(char)
-    
+ 
 def main():
     lexical_analyzer()
 
