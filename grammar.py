@@ -1,30 +1,30 @@
 
 grammar = {
-    "PROG": [["public", "class", "id", "{", "public", "static", "void", "id", "(", ")", "{", "CMDS", "}", "}"]],
-    "CMDS": [["CMD", "CMDS"], None],
+    "PROG": ["public class id { public static void id ( ) { CMDS } }"],
+    "CMDS": ["CMD CMDS", ""],
     "CMD": ["DECL", "ATRIB", "IF_STMT"],
-    "DECL": [["TIPO", "id", ";"]],
+    "DECL": ["TIPO id ;"],
     "TIPO": ["int", "float", "char"],
-    "ATRIB": [["id", "=", "E", ";"]],
-    "IF_STMT": [["if", "(", "COND", ")", "{", "CMDS", "}", "SENAO"]],
-    "SENAO": [["else", "{", "CMDS", "}"], None],
-    "COND": [["E", "OP_REL", "E"]],
+    "ATRIB": ["id = E ;"],
+    "IF_STMT": ["if ( COND ) { CMDS } SENAO"],
+    "SENAO": ["else { CMDS }", ""],
+    "COND": ["E OP_REL E"],
     "OP_REL": ["==", "!=", "<", ">"],
-    "E": [["T", "E'"]],
-    "E'": [["+", "T", "E'"], ["-", "T", "E'"], None],
-    "T": [["F", "T'"]],
-    "T'": [["*", "F", "T'"], ["/", "F", "T'"], None],
-    "F": [["(", "E", ")"], "id", "num"]
-    # "D": [["T", "id", "IDS", ";", "D"], None],
-    # "IDS": [[",", "id", "IDS"], None],
-    # "T": [["TB", "V"]],
+    "E": ["T E'"],
+    "E'": ["+ T E'", "- T E'", ""],
+    "T": ["F T'"],
+    "T'": ["* F T'", "/ F T'", ""],
+    "F": ["( E )", "id", "num"]
+    # "D": ["T id IDS ; D", ""],
+    # "IDS": [", id IDS", ""],
+    # "T": ["TB V"],
     # "TB": ["char", "int"],
-    # "V": [["[", "num_int", "]", "V"], None]
-    # "E": [["T", "E'"]],
-    # "E'": [["+", "T", "E'"], None],
-    # "T": [["F", "T'"]],
-    # "T'": [["*", "F", "T'"], None],
-    # "F": ["id", ["(", "E", ")"]]
+    # "V": ["[ num_int ] V", ""]
+    # "E": ["T E'"],
+    # "E'": ["+ T E'", ""],
+    # "T": ["F T'"],
+    # "T'": ["* F T'", ""],
+    # "F": ["id", "( E )"]
 }
 
 start_symbol = "PROG"

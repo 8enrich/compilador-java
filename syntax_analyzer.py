@@ -31,32 +31,36 @@ class SyntaxAnalyzer:
         return x_set
 
     def first_aux(self, x, Y):
-        y = Y[0] if isinstance(Y, list) else Y
-        first_y = self.first(y)
-        x_set = first_y if first_y == {None} else first_y - {None}
-        if None in first_y and isinstance(Y, list):
-            x_set = x_set.union(self.first_aux(x, Y[1:]))
+        y = Y.split()
+        first_y = self.first(y[0] if len(y) > 0 else "")
+        x_set = first_y if first_y == {""} else first_y - {""}
+        if "" in first_y and len(y) > 0:
+            x_set = x_set.union(self.first_aux(x, y[1:]))
         return x_set
 
     def get_productions(self):
         productions_tuple = []
         for key, values in grammar.items():
             for value in values:
-                if value is None: continue
-                productions_tuple.append((key, value if isinstance(value, list) else [value]))
+                if value == "": continue
+                productions_tuple.append((key, value.split()))
         return productions_tuple
 
     def get_next_set(self, values):
         next = {}
+        sets = {}
         for value in values:
             key, productions = value
             for index, item in enumerate(productions):
                 if is_terminal(item): continue
                 if index + 1 < len(productions):
-                    next[item] = (productions[index + 1], index + 1)
+                    if productions[index + 1] in sets.get(item, set()): continue
+                    next[item] = next.get(item, []) + [(productions[index + 1], index + 1)]
+                    sets[item] = sets.get(item, set()).union({productions[index + 1]})
                     continue
                 if key == item: continue
-                next[item] = (key, 0)
+                next[item] = next.get(item, []) + [(key, 0)]
+                sets[item] = sets.get(item, set()).union({key})
         return next
 
     def set_follow_sets(self):
@@ -71,12 +75,15 @@ class SyntaxAnalyzer:
             a_set.add(end_of_input)
         if self.follow_sets.get(x, None):
             return self.follow_sets[x].union(a_set)
-        value, index = next.get(x, (None, -1))
-        if not value:
-            return a_set
+        for production in next.get(x, []):
+            a_set = a_set.union(self.follow_aux(production, next))
+        return a_set
+
+    def follow_aux(self, x, next):
+        value, index = x
         if index > 0:
-            return (self.first(value) - {None}).union(self.follow(value, next) if None in self.first_sets.get(value, []) else {})
-        return a_set.union(self.follow(value, next)) 
+            return (self.first(value) - {""}).union(self.follow(value, next) if "" in self.first_sets.get(value, []) else {})
+        return self.follow(value, next)
 
     def get_token_index(self, token):
         return self.indexes.get(token[0], token[1])
@@ -86,18 +93,15 @@ class SyntaxAnalyzer:
         token_table.append(("END_OF_INPUT", end_of_input))
         i = 0
         while len(stack) > 0:
-            token = token_table[i]
+            token = self.get_token_index(token_table[i])
             symbol = stack.pop()
-            if symbol == self.get_token_index(token):
+            if symbol == token:
                 i += 1
                 continue
-            production = self.M[symbol, self.get_token_index(token)]
-            if production == "": raise Exception()
-            if production is None: continue
-            if isinstance(production, list):
-                stack += production[::-1]
-                continue
-            stack.append(production)
+            production = self.M[symbol, token]
+            if production is None: raise Exception(f'Produção do tipo, "{symbol}" "{token}" não existe')
+            if production == "": continue
+            stack += production.split()[::-1]
 
 if __name__ == "__main__":
     sa = SyntaxAnalyzer()

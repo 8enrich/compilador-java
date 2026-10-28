@@ -1,41 +1,42 @@
-from functools import reduce
-from grammar import grammar, is_terminal
+from grammar import grammar, is_terminal, end_of_input
+from itertools import chain
 
 class M_table:
     
     def __init__(self, first, follow):
         self.indexes_x = {value: key for key, value in enumerate(grammar.keys())}
         self.indexes_y = self.set_indexes_y()
-        self.table = [["" for _ in self.indexes_y] for _ in self.indexes_x]
-        print(self.indexes_y)
+        self.table = [[None for _ in self.indexes_y] for _ in self.indexes_x]
         self.make_table(first, follow)
 
     def set_indexes_y(self):
-        indexes_y = set()
-        for item in grammar.values():
-            print(indexes_y)
-            for p in item:
-                print(p)
-                if p is None: continue
-                if isinstance(p, list):
-                    indexes_y = indexes_y.union(set(filter(is_terminal, p)))
-                    continue
-                print(item)
-                indexes_y = indexes_y.union(set(filter(is_terminal, item)))
-        return {item: index for index, item in enumerate(indexes_y)}
+        indexes_y = set(
+            filter(
+                is_terminal, 
+                chain.from_iterable(
+                    [
+                        x.split() for x in filter(
+                            lambda x: x, 
+                            chain.from_iterable(grammar.values())
+                        )
+                    ]
+                )
+            )
+        )
+        return {item: index for index, item in enumerate(indexes_y.union({end_of_input}))}
 
     def make_table(self, first, follow):
         for key, productions in grammar.items():
             for production in productions:
-                x = production[0] if isinstance(production, list) else production
-                if x is None:
+                x = production.split()
+                if not x:
                     for item in follow[key]:
                         self[key, item] = production
                     continue
-                if is_terminal(x):
-                    self[key, x] = production
+                if is_terminal(x[0]):
+                    self[key, x[0]] = production
                     continue
-                for item in first[x]:
+                for item in first[x[0]]:
                     self[key, item] = production
 
     def __setitem__(self, indexes, value):
@@ -46,20 +47,19 @@ class M_table:
         x, y = indexes
         index_x, index_y = self.indexes_x.get(x, None), self.indexes_y.get(y, None)
         if index_x is None or index_y is None:
-            print(self)
-            raise Exception("Indexes not found")
+            raise Exception(f'Indexes "{x}" "{y}" not found')
         return self.table[index_x][index_y]
 
     def _format_cell(self, cell):
-        if cell == "":
+        if cell is None:
             return "-"
         if isinstance(cell, tuple) and len(cell) == 2:
             lhs, rhs = cell
             if isinstance(rhs, list):
                 parts = []
                 for item in rhs:
-                    if item is None:
-                        parts.append("ε")
+                    if item == "":
+                        parts.append("&")
                     elif isinstance(item, list):
                         parts.append(" ".join(str(s) for s in item))
                     else:
