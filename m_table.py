@@ -47,8 +47,8 @@ class M_table:
         x, y = indexes
         index_x, index_y = self.indexes_x.get(x, None), self.indexes_y.get(y, None)
         if index_x is None or index_y is None:
-            raise Exception(f'Indexes "{x}" "{y}" not found')
-        return self.table[index_x][index_y]
+            return None, "error ')' expected"
+        return self.table[index_x][index_y], None
 
     def _format_cell(self, cell):
         if cell is None:

@@ -1,12 +1,20 @@
 from sys import argv, exit
+from errors import error
 from lexical_analyzer import LexicalAnalyzer
 from syntax_analyzer import SyntaxAnalyzer
 
 def main(filename: str):
     lexical_analyzer = LexicalAnalyzer(filename)
     token_table, symbol_table = lexical_analyzer.analyze()
+    errors = list(filter(lambda x: x[0] == "ERROR", token_table))
+    if errors:
+        error(filename, errors)
+        exit(1)
     syntax_analyzer = SyntaxAnalyzer()
-    syntax_analyzer.analyze(token_table)
+    syntax_errors = syntax_analyzer.analyze(token_table)
+    if syntax_errors:
+        error(filename, syntax_errors)
+        exit(1)
 
 if len(argv) != 2:
     print(f"Uso: python3 {argv[0]} <java-file>")

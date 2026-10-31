@@ -88,7 +88,21 @@ class SyntaxAnalyzer:
     def get_token_index(self, token):
         return self.indexes.get(token[0], token[1])
 
+    def add_error(self, error, token, line):
+        return ("ERROR", token, error, line) 
+
+    def panic_mode(self, token_table, i, stack):
+        panic_mode = True
+        while len(stack) > 0 and i < len(token_table) and panic_mode:
+            token = self.get_token_index(token_table[i])
+            symbol = stack[-1]
+            if token != ";" and token != "}": i += 1
+            if symbol != ";" and symbol != "}": stack.pop()
+            panic_mode = (token != ";" and token != "}") or (symbol != ";" and symbol != "}")
+        return stack, i
+
     def analyze(self, token_table):
+        errors = []
         stack = [start_symbol]
         token_table.append(("END_OF_INPUT", end_of_input))
         i = 0
@@ -98,10 +112,18 @@ class SyntaxAnalyzer:
             if symbol == token:
                 i += 1
                 continue
-            production = self.M[symbol, token]
-            if production is None: raise Exception(f'Produção do tipo, "{symbol}" "{token}" não existe')
+            production, error = self.M[symbol, token]
+            if error: 
+                errors.append([self.add_error(f"'{symbol}' expected", token_table[i][1], token_table[i - 1][3])])
+                stack, i = self.panic_mode(token_table, i, stack)
+                continue
+            if production is None: 
+                errors.append(self.add_error("illegal start of expression", token_table[i][1], token_table[i][3]))
+                stack, i = self.panic_mode(token_table, i, stack)
+                continue
             if production == "": continue
             stack += production.split()[::-1]
+        return errors
 
 if __name__ == "__main__":
     sa = SyntaxAnalyzer()

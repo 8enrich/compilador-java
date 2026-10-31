@@ -15,16 +15,6 @@ grammar = {
     "T": ["F T'"],
     "T'": ["* F T'", "/ F T'", ""],
     "F": ["( E )", "id", "num"]
-    # "D": ["T id IDS ; D", ""],
-    # "IDS": [", id IDS", ""],
-    # "T": ["TB V"],
-    # "TB": ["char", "int"],
-    # "V": ["[ num_int ] V", ""]
-    # "E": ["T E'"],
-    # "E'": ["+ T E'", ""],
-    # "T": ["F T'"],
-    # "T'": ["* F T'", ""],
-    # "F": ["id", "( E )"]
 }
 
 start_symbol = "PROG"

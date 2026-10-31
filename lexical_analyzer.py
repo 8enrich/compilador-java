@@ -7,7 +7,7 @@ EOB = '\0'
 
 class LexicalAnalyzer:
 
-    def __init__(self, filename: str, buffer_size: int = 5):
+    def __init__(self, filename: str, buffer_size: int = 50):
 
         self.token_table = []
         self.symbol_table = {}
@@ -21,6 +21,7 @@ class LexicalAnalyzer:
             self.data = self.file.read(self.BUFFER_SIZE - 1)
             self.eof = self.eof or len(self.data) < self.BUFFER_SIZE - 1
             self.buffers[i] = self.data + EOB
+        self.line = 1
 
     def set_begin_pointer(self):
         self.lexeme = ""
@@ -71,6 +72,7 @@ class LexicalAnalyzer:
             char = self.current_char()
 
             if self.is_whitespace(char):
+                if char == "\n": self.line += 1
                 self.advance()
                 self.set_begin_pointer()
                 continue
@@ -143,7 +145,7 @@ class LexicalAnalyzer:
         if self.current_char() not in "+-*/%; )":
             while not self.end_of_file() and self.current_char() not in "+-*/%; ": self.advance()
             lexeme = self.get_lexeme()
-            self.create_error_token(lexeme)
+            self.create_error_token(lexeme, "';' expected")
             return
         
         lexeme = self.get_lexeme()
@@ -154,7 +156,7 @@ class LexicalAnalyzer:
         while not self.end_of_file() and self.is_digit(self.current_char()): self.advance()
         lexeme = self.get_lexeme()
         if lexeme[-1] == ".": 
-            self.create_error_token(lexeme)
+            self.create_error_token(lexeme, "incompatible types: possible lossy conversion from double to float")
             return
         self.create_token("FLOAT", lexeme, float(lexeme))
 
@@ -232,7 +234,7 @@ class LexicalAnalyzer:
             if char == '"':
                 double_quote += 1
             if char == "\n":
-                self.create_error_token(self.get_lexeme())
+                self.create_error_token(self.get_lexeme(), "unclosed string literal")
                 return
             self.advance()
         lexeme = self.get_lexeme()
@@ -245,8 +247,8 @@ class LexicalAnalyzer:
             index = data["index"]
             self.symbol_table[lexeme] = {"occurrences": occurrences + 1, "index": index}
             attribute = index
-        self.token_table.append((token_type, lexeme, attribute))
+        self.token_table.append((token_type, lexeme, attribute, self.line))
         self.set_begin_pointer()
 
-    def create_error_token(self, lexeme: str):
-        self.create_token("ERROR", lexeme) 
+    def create_error_token(self, lexeme: str, attribute = None):
+        self.create_token("ERROR", lexeme, attribute) 
