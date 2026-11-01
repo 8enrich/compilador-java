@@ -2,7 +2,7 @@
 
 JavaPy é um projeto de compilador Java escrito em Python, sendo desenvolvido para
 a cadeira de compiladores do curso de ciências da computação, por enquanto
-contém apenas a parte de análise léxica.
+contém apenas as partes de análise léxica e análise sintática.
 
 ----------
 
