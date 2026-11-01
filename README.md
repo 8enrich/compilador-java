@@ -25,13 +25,3 @@ cd compilador-java
 ```bash
 python3 javapy.py <java-file>
 ```
-
-----------
-
-### Rodando os testes:
-
-Existem alguns arquivos de teste na pasta /java-files, para rodar faça:
-
-```bash
-python3 test.py
-```
