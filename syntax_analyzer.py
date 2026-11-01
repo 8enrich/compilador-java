@@ -114,7 +114,7 @@ class SyntaxAnalyzer:
                 continue
             production, error = self.M[symbol, token]
             if error: 
-                errors.append([self.add_error(f"'{symbol}' expected", token_table[i][1], token_table[i - 1][3])])
+                errors.append(self.add_error(f"'{symbol}' expected", token_table[i][1], token_table[i - 1][3]))
                 stack, i = self.panic_mode(token_table, i, stack)
                 continue
             if production is None: 
